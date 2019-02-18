@@ -15,8 +15,13 @@ import numpy as np
 from scipy.special import expit
 
 
-class NeuralNetwork():
+class NeuralNetwork:
     """
+    Implementation of neural network object for classifying handwritten digits
+    from the MNIST database.
+
+    XXX - fill in with PEP 8 recommendations for proper docstring
+    documentation.
     """
 
     def __init__(self, dims, learning_rate=0.05):
@@ -45,6 +50,12 @@ class NeuralNetwork():
         self.biases = self.init_bias_vectors()
 
     def init_weight_matrices(self):
+        """
+        Initialize the structure of the weight matrices with random uniformally
+        distributed float values between 0 and 1.
+
+        :return: list of initialized weight numpy matrices.
+        """
         weights = []
         for i in range(len(self.dims) - 1):
             cur_weight_matrix = np.random.rand(self.dims[i + 1], self.dims[i])
@@ -52,6 +63,12 @@ class NeuralNetwork():
         return weights
 
     def init_bias_vectors(self):
+        """
+        Initialize the structure of the bias vectors with random uniformally
+        distributed float values between 0 and 1.
+
+        :return:  list of initialized bias numpy column vectors.
+        """
         biases = []
         for i in range(len(self.dims) - 1):
             cur_bias_vector = np.random.rand(self.dims[i + 1], 1)
@@ -79,12 +96,20 @@ class NeuralNetwork():
         return cur_act
 
     def train(self, training_data):
-        return self
+        """
+        Use stochastic gradient descent to train the neural network.
+
+        :param training_data:
+        """
+        pass
 
     def backpropagation(self):
-        return self
+        pass
 
     def print_weight_matrix(self):
+        """
+        Print the weight matrices and their values.
+        """
 
         for i in range(len(self.weights)):
             print("Layer " + str(i + 1) + ": \n")
@@ -92,6 +117,9 @@ class NeuralNetwork():
             print()
 
     def print_bias_vectors(self):
+        """
+        Print the bias vectors and their values.
+        """
         for i in range(len(self.biases)):
             print("Layer " + str(i + 1) + ": \n")
             print(self.biases[i])
@@ -99,6 +127,4 @@ class NeuralNetwork():
 
 
 myNetwork = NeuralNetwork([2, 3, 3, 2])
-#myNetwork.print_bias_vectors()
-#myNetwork.print_weight_matrix()
 myNetwork.feed_forward([1, 1])
