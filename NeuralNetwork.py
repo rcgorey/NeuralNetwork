@@ -12,6 +12,7 @@ Created independently, using http://neuralnetworksanddeeplearning.com/
 as a resource.
 """
 import numpy as np
+from scipy.special import expit
 
 
 class NeuralNetwork():
@@ -38,21 +39,44 @@ class NeuralNetwork():
         self.weights = np.random.rand((3, 2))
         self.biases = np.random.rand(())
         '''
-
         self.dims = dims
         self.learning_rate = learning_rate
-        self.weights = []
-        self.initWeightMatrices()
+        self.weights = self.init_weight_matrices()
+        self.biases = self.init_bias_vectors()
 
-    def initWeightMatrices(self):
+    def init_weight_matrices(self):
         weights = []
-        for i in range(len(self.dims)-1):
-            cur_weight_matrix = np.random.rand(self.dims[i+1], self.dims[i])
+        for i in range(len(self.dims) - 1):
+            cur_weight_matrix = np.random.rand(self.dims[i + 1], self.dims[i])
             weights.append(cur_weight_matrix)
-        self.weights = weights
+        return weights
 
-    def feed_forward(self):
-        return null
+    def init_bias_vectors(self):
+        biases = []
+        for i in range(len(self.dims) - 1):
+            cur_bias_vector = np.random.rand(self.dims[i + 1], 1)
+            biases.append(cur_bias_vector)
+        return biases
+
+    def feed_forward(self, obs):
+        """
+        Feed input observation through neural network instance. Return the
+        output activations.
+
+        :param obs: input_activations as numpy array
+        :return: output activations as numpy array
+        """
+        cur_layer_ind = 0
+        cur_act = np.array(obs)
+        cur_act = cur_act.reshape(self.dims[0], 1)
+
+        for i in range(len(self.dims)-1):
+            z = (self.weights[cur_layer_ind].dot(cur_act)
+                 + self.biases[cur_layer_ind])
+            cur_act = expit(z)
+            cur_layer_ind += 1
+
+        return cur_act
 
     def train(self, training_data):
         return self
@@ -67,6 +91,14 @@ class NeuralNetwork():
             print(self.weights[i])
             print()
 
+    def print_bias_vectors(self):
+        for i in range(len(self.biases)):
+            print("Layer " + str(i + 1) + ": \n")
+            print(self.biases[i])
+            print()
 
-myNetwork = NeuralNetwork([])
-myNetwork.print_weight_matrix()
+
+myNetwork = NeuralNetwork([2, 3, 3, 2])
+#myNetwork.print_bias_vectors()
+#myNetwork.print_weight_matrix()
+myNetwork.feed_forward([1, 1])
