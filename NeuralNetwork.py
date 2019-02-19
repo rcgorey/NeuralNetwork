@@ -75,13 +75,29 @@ class NeuralNetwork:
             biases.append(cur_bias_vector)
         return biases
 
+    def set_learned_values(self, filename):
+        """
+        Reads textfile to populate a NeuralNetwork instance with specific
+        weights and biases.
+        :param filename:
+        :return:
+        """
+        pass
+
+    def write_learned_values(self):
+        """
+        Writes a textfile with NeuralNetwork's weights and biases.
+        """
+        pass
+
     def feed_forward(self, obs):
         """
         Feed input observation through neural network instance. Return the
         output activations.
 
         :param obs: input_activations as numpy array
-        :return: output activations as numpy array
+        :return: tuple containing the vector of weighted inputs to the output
+        layer, and the output activations as numpy array
         """
         cur_layer_ind = 0
         cur_act = np.array(obs)
@@ -93,14 +109,48 @@ class NeuralNetwork:
             cur_act = expit(z)
             cur_layer_ind += 1
 
-        return cur_act
+        return z, cur_act
 
-    def train(self, training_data):
+    def calc_output_error(obs, weighted_in, output_act):
+        output_err = ((output_act - obs.LABEL) * (expit(weighted_in)
+                      * (1 - expit(weighted_in))))
+        return output_err
+
+    def train(self, training_data, num_epochs=10, mini_batch_size=10):
         """
         Use stochastic gradient descent to train the neural network.
 
         :param training_data:
         """
+        #calculate num mini-batches
+        num_mini_batches = num_epochs // mini_batch_size
+        #XXX add error checking
+
+        for epoch in range(num_epochs):
+            for batch in range(num_mini_batches):
+                ' following two lines of code taken from'
+                ' neuralnetworksanddeeplearning.com'
+                w_grads = [np.empty(w_mat.shape) for w_mat in self.weights]
+                b_grads = [np.empty(b_vec.shape) for b_vec in self.biases]
+
+                for obs in range(mini_batch_size):
+                    err_vecs = [np.empty(b_vec.shape) for b_vec in self.biases]
+                    z, output_a = self.feed_forward(obs)
+                    err_vecs[-1] = NeuralNetwork.calc_output_error(obs,
+                                                              z,
+                                                              output_a)
+                    for layer in range(1, len(self.dims)-2, -1): ##XXX Check
+                        err_vecs[layer] = (np.dot(self.weights[layer+1].T,err_vecs[layer+1]) * (expit(weighted_in)
+                                                   * (1 - expit(weighted_in))))
+                    #3. Backpropagate error through network, capturing error
+                    #vectors for each layer
+                    #. Calculate the the gradient.
+                #find average gradient over mini batch of training examples
+                #update weights and biases using avg. gradient
+
+        #save weights and biases?
+
+
         pass
 
     def backpropagation(self):
