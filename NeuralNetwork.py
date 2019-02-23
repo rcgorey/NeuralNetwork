@@ -90,6 +90,42 @@ class NeuralNetwork:
         """
         pass
 
+    def train2(self, training_data, num_epochs=10, batch_size = 10):
+        """
+
+        :param training_data:
+        :return:
+        """
+
+        t_data = np.array(training_data)
+
+        w_grads = [np.zeroes(w_mat.shape) for w_mat in self.weights]
+        b_grads = [np.zeroes(b_vec.shape) for b_vec in self.biases]
+        z_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
+        a_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
+        e_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
+
+        for i in range(num_epochs):
+            np.random.shuffle(t_data)
+            training_index = 0
+            batch_tracker = 0
+
+            while training_index < len(training_data):
+                if batch_tracker < batch_size:
+
+
+
+
+                    else: batch_tracker = 0
+
+
+                training_index += 1
+                batch_tracker += 1
+
+            training_index = 0
+
+
+
     def feed_forward(self, obs):
         """
         Feed input observation through neural network instance. Return the
