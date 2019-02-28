@@ -96,7 +96,6 @@ class NeuralNetwork:
         :param training_data:
         :return:
         """
-
         t_data = np.array(training_data)
 
         w_grads = [np.zeroes(w_mat.shape) for w_mat in self.weights]
@@ -105,18 +104,30 @@ class NeuralNetwork:
         a_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
         e_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
 
-        for i in range(num_epochs):
+        for epoch in range(num_epochs):
             np.random.shuffle(t_data)
             training_index = 0
             batch_tracker = 0
 
             while training_index < len(training_data):
                 if batch_tracker < batch_size:
+                    'for each training obs'
+                    a_vecs[0] = training_data[training_index][0]
+                    cur_layer_ind = 0
+
+                    for i in range(len(self.dims) - 1):
+                        z = (self.weights[cur_layer_ind].dot(cur_act)
+                             + self.biases[cur_layer_ind])
+                        cur_act = expit(z)
+                        cur_layer_ind += 1
+
+                    return z, cur_act
 
 
 
+                    else:
 
-                    else: batch_tracker = 0
+                    batch_tracker = 0
 
 
                 training_index += 1
@@ -124,6 +135,11 @@ class NeuralNetwork:
 
             training_index = 0
 
+    def load_data(self):
+
+        
+
+    def backprop(self, ):
 
 
     def feed_forward(self, obs):
