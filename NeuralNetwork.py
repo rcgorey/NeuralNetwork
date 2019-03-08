@@ -14,6 +14,7 @@ as a resource.
 import numpy as np
 from scipy.special import expit
 
+import MnistDataLoader as data_loader
 
 class NeuralNetwork:
     """
@@ -24,14 +25,14 @@ class NeuralNetwork:
     documentation.
     """
 
-    def __init__(self, dims, learning_rate=0.05):
+    def __init__(self, dims, learning_rate=1.0):
         """
         Initializes an instance of the NeuralNetwork class.
 
         :param dims: list containing the number of nodes in each layer of the
             desired network (one int for each layer)
         :param learning_rate: rate the network learns from training data with
-            default value = 0.05
+            default value = 1.0
         """
 
         '''
@@ -90,57 +91,90 @@ class NeuralNetwork:
         """
         pass
 
-    def train2(self, training_data, num_epochs=10, batch_size = 10):
+    def train(self, training_data, num_epochs = 10, batch_size = 10,
+              test_data = None):
         """
+        Trains the network using Stochastic Gradient Descent (SGD).
 
-        :param training_data:
-        :return:
+        :param training_data: zipped 2-element tuple containing the pixel
+        values and labels.
+        :param num_epochs: int number of epochs to train over, default 10.
+        :param batch_size: int designating mini-batch size for SGD, default 10.
+        :param learning_rate: float between 0 and 1 adjusting the rate the
+        network learns from each mini batch.
         """
-        t_data = np.array(training_data)
-
-        w_grads = [np.zeroes(w_mat.shape) for w_mat in self.weights]
-        b_grads = [np.zeroes(b_vec.shape) for b_vec in self.biases]
-        z_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
-        a_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
-        e_vecs = [np.zeroes(self.dims[i], 1) for i in len(self.dims)]
-
         for epoch in range(num_epochs):
-            np.random.shuffle(t_data)
-            training_index = 0
-            batch_tracker = 0
+            np.random.shuffle(training_data)
+            batches = [training_data[k: k + batch_size]
+                       for k in range(0, len(training_data), batch_size)]
+            for batch in batches:
+                self.process_mini_batch(batch)
 
-            while training_index < len(training_data):
-                if batch_tracker < batch_size:
-                    'for each training obs'
-                    a_vecs[0] = training_data[training_index][0]
-                    cur_layer_ind = 0
+            print("Finished epoch " + str(epoch + 1) + " of " + str(num_epochs))
+            if test_data:
+                self.evaluate(test_data)
 
-                    for i in range(len(self.dims) - 1):
-                        z = (self.weights[cur_layer_ind].dot(cur_act)
-                             + self.biases[cur_layer_ind])
-                        cur_act = expit(z)
-                        cur_layer_ind += 1
+    def process_mini_batch(self, batch):
+        """
+        Applies stochastic gradient descent for one batch of training data
 
-                    return z, cur_act
+        :param batch: a list containing zipped tuples of training data and
+        labels.
+        """
+        w_grads = [np.zeros(w_mat.shape) for w_mat in self.weights]
+        b_grads = [np.zeros(b_vec.shape) for b_vec in self.biases]
+
+        for data, label in batch:
+            w_deltas, b_deltas = self.backprop(data, label)
+            w_grads = [w + w_delta
+                            for w, w_delta in zip(w_grads, w_deltas)]
+            b_grads = [b + b_delta
+                            for b, b_delta in zip(b_grads, b_deltas)]
+
+        w_grads = [w * (self.learning_rate/len(batch))
+                        for w in w_grads]
+        b_grads = [b * (self.learning_rate/len(batch))
+                        for b in b_grads]
+
+        print(w_grads)
+
+        self.weights = [w + w_grad
+                        for w, w_grad in zip(self.weights, w_grads)]
+        self.biases = [b + b_grad
+                        for b, b_grad in zip(self.biases, b_grads)]
 
 
+    def backprop(self, data, label):
 
-                    else:
+        ### 1. Feed Forward, capturing data as needed.
+        a_vecs = [data]
+        z_vecs = []
 
-                    batch_tracker = 0
+        for w, b in zip(self.weights, self.biases):
+            z_vecs.append(np.dot(w, a_vecs[-1]) + b)
+            a_vecs.append(z_vecs[-1])
 
+        w_grads = [np.zeros(w_mat.shape) for w_mat in self.weights]
+        b_grads = [np.zeros(b_vec.shape) for b_vec in self.biases]
 
-                training_index += 1
-                batch_tracker += 1
+        ### 2. Find last layer's respective gradient elements
+        error = self.calc_output_error(z_vecs[-1], a_vecs[-1], label)
+        b_grads[-1] = error
+        w_grads[-1] = np.dot(error, a_vecs[-2].T)
 
-            training_index = 0
+        ### 3. Backpropagate
+        for layer_ind in range(2, len(self.dims)):
+            s_prime = sig_prime(z_vecs[-layer_ind])
+            b_grads[-layer_ind] = np.dot(self.weights[-layer_ind + 1].T,
+                                         b_grads[-layer_ind + 1]) \
+                                  * s_prime
+            w_grads[-layer_ind] = np.dot(b_grads[-layer_ind], a_vecs[-layer_ind-1].T)
 
-    def load_data(self):
+        return w_grads, b_grads
 
-        
-
-    def backprop(self, ):
-
+    def calc_output_error(self, z, a_output, label):
+        output_err = ((a_output - label) * (sig(z) * (1 - sig(z))))
+        return output_err
 
     def feed_forward(self, obs):
         """
@@ -151,62 +185,27 @@ class NeuralNetwork:
         :return: tuple containing the vector of weighted inputs to the output
         layer, and the output activations as numpy array
         """
-        cur_layer_ind = 0
-        cur_act = np.array(obs)
-        cur_act = cur_act.reshape(self.dims[0], 1)
+        a = obs
+        for w, b in zip(self.weights, self.biases):
+            a = sig(np.dot(w, a) + b)
+        return a
 
-        for i in range(len(self.dims)-1):
-            z = (self.weights[cur_layer_ind].dot(cur_act)
-                 + self.biases[cur_layer_ind])
-            cur_act = expit(z)
-            cur_layer_ind += 1
-
-        return z, cur_act
-
-    def calc_output_error(obs, weighted_in, output_act):
-        output_err = ((output_act - obs.LABEL) * (expit(weighted_in)
-                      * (1 - expit(weighted_in))))
-        return output_err
-
-    def train(self, training_data, num_epochs=10, mini_batch_size=10):
+    def evaluate(self, test_data):
         """
-        Use stochastic gradient descent to train the neural network.
+        Evaluate the accuracy of the neural network over a set of training data.
+        Print the results.
 
-        :param training_data:
+        :param test_data: a list of tuples containing the raw pixel data as an
+        np array, and the integer label.
         """
-        #calculate num mini-batches
-        num_mini_batches = num_epochs // mini_batch_size
-        #XXX add error checking
+        num_obs = len(test_data)
+        num_correct = 0
+        for obs, label in test_data:
+            if label == np.argmax(self.feed_forward(obs)):
+                num_correct += 1
+        print("Accuracy = " + str(num_correct) + "/ " + str(num_obs) + " = " +
+              str(num_correct/num_obs))
 
-        for epoch in range(num_epochs):
-            for batch in range(num_mini_batches):
-                ' following two lines of code taken from'
-                ' neuralnetworksanddeeplearning.com'
-                w_grads = [np.empty(w_mat.shape) for w_mat in self.weights]
-                b_grads = [np.empty(b_vec.shape) for b_vec in self.biases]
-
-                for obs in range(mini_batch_size):
-                    err_vecs = [np.empty(b_vec.shape) for b_vec in self.biases]
-                    z, output_a = self.feed_forward(obs)
-                    err_vecs[-1] = NeuralNetwork.calc_output_error(obs,
-                                                              z,
-                                                              output_a)
-                    for layer in range(1, len(self.dims)-2, -1): ##XXX Check
-                        err_vecs[layer] = (np.dot(self.weights[layer+1].T,err_vecs[layer+1]) * (expit(weighted_in)
-                                                   * (1 - expit(weighted_in))))
-                    #3. Backpropagate error through network, capturing error
-                    #vectors for each layer
-                    #. Calculate the the gradient.
-                #find average gradient over mini batch of training examples
-                #update weights and biases using avg. gradient
-
-        #save weights and biases?
-
-
-        pass
-
-    def backpropagation(self):
-        pass
 
     def print_weight_matrix(self):
         """
@@ -228,5 +227,20 @@ class NeuralNetwork:
             print()
 
 
-myNetwork = NeuralNetwork([2, 3, 3, 2])
-myNetwork.feed_forward([1, 1])
+def sig(z):
+    """
+    Return the sigmoid function applied to some vector of weighted inputs z.
+
+    :param z: np.array of weighted inputs.
+    :return: np.array of activations
+    """
+    return 1.0/(1.0 + np.exp(-z))
+
+def sig_prime(z):
+    return sig(z) * (1 - sig(z))
+
+myNetwork = NeuralNetwork([784, 3, 3, 10])
+
+#load data
+training_data, val_data, test_data = data_loader.get_formatted_data()
+myNetwork.train(training_data, test_data=test_data)

@@ -55,13 +55,13 @@ def get_formatted_data():
 
     train_input = [np.reshape(x, (784, 1)) for x in train_data[0]]
     train_label = [np.reshape(vectorize_label(y), (10, 1)) for y in train_data[1]]
-    formatted_train_data = zip(train_input, train_label)
+    formatted_train_data = list(zip(train_input, train_label))
 
     val_input = [np.reshape(x, (784,1)) for x in val_data[0]]
-    formatted_val_data = zip(val_input, val_data[1])
+    formatted_val_data = list(zip(val_input, val_data[1]))
 
     test_input = [np.reshape(x, (784,1)) for x in val_data[0]]
-    formatted_test_data = zip(test_input, test_data[1])
+    formatted_test_data = list(zip(test_input, test_data[1]))
 
     return (formatted_train_data, formatted_val_data, formatted_test_data)
 
@@ -76,6 +76,3 @@ def vectorize_label(label):
     vectorized_label = np.zeros((10,1))
     vectorized_label[label] = 1.0
     return vectorized_label
-
-data = get_formatted_data()
-
